@@ -1,4 +1,5 @@
 import { useState } from "react";
+import TaskManager from "./TaskManager";
 import "./App.css";
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
 
   const [rememberMe, setRememberMe] = useState(false);
   const [message, setMessage] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState(null);
 
   // Password strength
   const getPasswordStrength = () => {
@@ -46,21 +49,50 @@ function App() {
   };
 
   // Login
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const handleLogin = async (e) => {
+  e.preventDefault();
 
-    if (!email || !password) {
-      setMessage("Please fill in all fields.");
+  if (!email || !password) {
+    setMessage("Please fill in all fields.");
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    setMessage("Please enter a valid email address.");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:5000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Invalid email or password");
       return;
     }
 
-    if (!isValidEmail(email)) {
-      setMessage("Please enter a valid email address.");
-      return;
-    }
+    setMessage(data.message);
+    // Save logged-in user
+setLoggedInUser(data.user);
 
-    setMessage("✓ Login successful!");
-  };
+    // Login successful
+    setIsLoggedIn(true);
+
+  } catch (error) {
+    console.log("Login error:", error);
+    setMessage("Unable to connect to the server.");
+  }
+};
 
   // Signup
   const handleSignUp = async (e) => {
@@ -112,6 +144,9 @@ function App() {
     setName("");
     setConfirmPassword("");
   };
+  if (isLoggedIn) {
+  return <TaskManager user={loggedInUser} />;
+}
 
   return (
     <div className="app">
