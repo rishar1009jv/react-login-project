@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -17,7 +18,7 @@ app.use(express.json());
 // ===============================
 
 mongoose
-  .connect("mongodb://127.0.0.1:27017/react_project")
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected successfully!");
   })

@@ -50,7 +50,7 @@ function TaskManager({ user }) {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/tasks/${user.id}`
+        `https://react-login-project-jy61.vercel.app/tasks/${user.id}`
       );
 
       const data = await response.json();
@@ -242,7 +242,7 @@ function TaskManager({ user }) {
     if (editingTask) {
       // Update existing task
       const response = await fetch(
-        `http://localhost:5000/tasks/${editingTask.id}`,
+        `https://react-login-project-jy61.vercel.app/tasks/${editingTask.id}`,
         {
           method: "PUT",
           headers: {
@@ -272,9 +272,10 @@ function TaskManager({ user }) {
 
       setSelectedDate(form.date);
     } else {
-      // Create new task
+      
+        // Create new task
       const response = await fetch(
-        "http://localhost:5000/tasks",
+        "https://react-login-project-jy61.vercel.app/tasks",
         {
           method: "POST",
           headers: {
