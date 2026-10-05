@@ -3,11 +3,25 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const multer = require("multer");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("./models/User");
 const Task = require("./models/Task");
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const app = express();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  }
+});
 
 app.use(cors());
 app.use(express.json());
@@ -246,7 +260,7 @@ app.get("/tasks/:userId", async (req, res) => {
 
 
 // Add a new task
-app.post("/tasks", async (req, res) => {
+app.post("/tasks", upload.single("image"), async (req, res) => {
   try {
     const {
       title,
@@ -258,8 +272,8 @@ app.post("/tasks", async (req, res) => {
       completed,
       userId
     } = req.body;
-    console.log("TASK DATA RECEIVED:", req.body);
 
+    console.log("TASK DATA RECEIVED:", req.body);
 
     if (!title || !userId) {
       return res.status(400).json({
@@ -274,9 +288,17 @@ app.post("/tasks", async (req, res) => {
       time,
       priority,
       category,
-      completed: completed || false,
+      completed: completed === "true",
       userId
     });
+
+    // Save image into MongoDB
+    if (req.file) {
+      newTask.image = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    }
 
     await newTask.save();
 
@@ -284,6 +306,7 @@ app.post("/tasks", async (req, res) => {
       message: "Task created successfully",
       task: newTask
     });
+
   } catch (error) {
     console.log("Create task error:", error);
 
@@ -322,6 +345,24 @@ app.put("/tasks/:id", async (req, res) => {
     res.status(500).json({
       message: "Unable to update task"
     });
+  }
+});
+// Get task image
+app.get("/tasks/:id/image", async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task || !task.image || !task.image.data) {
+      return res.status(404).send("Image not found");
+    }
+
+    res.set("Content-Type", task.image.contentType);
+    res.send(task.image.data);
+
+  } catch (error) {
+    console.log("Get task image error:", error);
+
+    res.status(500).send("Unable to load image");
   }
 });
 

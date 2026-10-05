@@ -38,6 +38,18 @@ const taskSchema = new mongoose.Schema(
       default: false
     },
 
+    // Image stored permanently in MongoDB
+    image: {
+      data: {
+        type: Buffer,
+        default: null
+      },
+      contentType: {
+        type: String,
+        default: ""
+      }
+    },
+
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
