@@ -100,7 +100,7 @@ const handleGoogleLogin = async (credentialResponse) => {
     setMessage("");
 
     const response = await fetch(
-      "http://localhost:5000/auth/google",
+      "https://react-login-project-jy61.vercel.app/auth/google",
       {
         method: "POST",
         headers: {
