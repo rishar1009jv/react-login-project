@@ -3,10 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-
+const { OAuth2Client } = require("google-auth-library");
 const User = require("./models/User");
 const Task = require("./models/Task");
-
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const app = express();
 
 app.use(cors());
@@ -144,6 +144,84 @@ app.post("/login", async (req, res) => {
 
     res.status(500).json({
       message: "Something went wrong"
+    });
+  }
+});
+// ===============================
+// GOOGLE LOGIN
+// ===============================
+
+app.post("/auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        message: "Google credential is required"
+      });
+    }
+
+    // Verify Google ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+
+    const {
+      sub: googleId,
+      email,
+      name,
+      picture,
+      email_verified
+    } = payload;
+
+    if (!email || !email_verified) {
+      return res.status(401).json({
+        message: "Google email could not be verified"
+      });
+    }
+
+    // Check whether user already exists
+    let user = await User.findOne({
+      email: email.toLowerCase()
+    });
+
+    // Create user if they don't exist
+    if (!user) {
+      user = new User({
+        name: name || "Google User",
+        email: email.toLowerCase(),
+        googleId,
+        profilePicture: picture || ""
+      });
+
+      await user.save();
+    } else {
+      // Update Google information for an existing user
+      user.googleId = googleId;
+      user.profilePicture = picture || user.profilePicture || "";
+
+      await user.save();
+    }
+
+    // Send user information to React
+    res.json({
+      message: "Google login successful!",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profilePicture: user.profilePicture || ""
+      }
+    });
+
+  } catch (error) {
+    console.log("Google login error:", error);
+
+    res.status(401).json({
+      message: "Google authentication failed"
     });
   }
 });

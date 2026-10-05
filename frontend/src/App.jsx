@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import TaskManager from "./TaskManager";
 import "./App.css";
 
@@ -90,6 +91,39 @@ setLoggedInUser(data.user);
 
   } catch (error) {
     console.log("Login error:", error);
+    setMessage("Unable to connect to the server.");
+  }
+};
+// Google Login
+const handleGoogleLogin = async (credentialResponse) => {
+  try {
+    setMessage("");
+
+    const response = await fetch(
+      "http://localhost:5000/auth/google",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Google login failed");
+      return;
+    }
+
+    setLoggedInUser(data.user);
+    setIsLoggedIn(true);
+
+  } catch (error) {
+    console.log("Google login error:", error);
     setMessage("Unable to connect to the server.");
   }
 };
@@ -309,6 +343,19 @@ setLoggedInUser(data.user);
                   >
                     LOGIN →
                   </button>
+                  <div className="google-login">
+  <div className="or-divider">
+    <span>OR</span>
+  </div>
+
+  <GoogleLogin
+    onSuccess={handleGoogleLogin}
+    onError={() => {
+      setMessage("Google login failed");
+    }}
+    useOneTap={false}
+  />
+</div>
 
 
                   {/* Message */}
