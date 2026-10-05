@@ -2116,3 +2116,17 @@ select {
     flex-direction: column;
   }
 }
+
+/* =========================
+   TASK IMAGE
+========================= */
+
+.task-image {
+  width: 100%;
+  max-width: 220px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  display: block;
+}

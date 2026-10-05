@@ -31,6 +31,7 @@ function TaskManager({ user }) {
 
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All");
@@ -219,6 +220,7 @@ function TaskManager({ user }) {
   const closeForm = () => {
     setShowForm(false);
     setEditingTask(null);
+    setSelectedImage(null);
   };
 
   const handleChange = (e) => {
@@ -232,8 +234,9 @@ function TaskManager({ user }) {
 
   const handleSubmit = async (e) => {
   if (e) {
-  e.preventDefault();
-}
+    e.preventDefault();
+  }
+
   if (!form.title.trim()) {
     return;
   }
@@ -272,20 +275,28 @@ function TaskManager({ user }) {
 
       setSelectedDate(form.date);
     } else {
-      
-        // Create new task
+      // Create new task with image
+      const formData = new FormData();
+
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("date", form.date);
+      formData.append("time", form.time);
+      formData.append("priority", form.priority);
+      formData.append("category", form.category);
+      formData.append("completed", "false");
+      formData.append("userId", user.id);
+
+      // Add image if selected
+      if (selectedImage) {
+        formData.append("image", selectedImage);
+      }
+
       const response = await fetch(
         "https://react-login-project-jy61.vercel.app/tasks",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...form,
-            completed: false,
-            userId: user.id,
-          }),
+          body: formData,
         }
       );
 
@@ -305,7 +316,9 @@ function TaskManager({ user }) {
       setSelectedDate(form.date);
     }
 
+    setSelectedImage(null);
     closeForm();
+
   } catch (error) {
     console.log("Task save error:", error);
   }
@@ -875,6 +888,17 @@ function TaskManager({ user }) {
 
 
                 <div className="full-task-content">
+                   {task._id && (
+                    <img
+                      src={`https://react-login-project-jy61.vercel.app/tasks/${task._id}/image`}
+                      alt={task.title}
+                      className="task-image"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
+
 
                   <div className="full-task-top">
 
@@ -1428,7 +1452,7 @@ function TaskManager({ user }) {
 
           <div>
             <strong>
-              Risha
+              College
             </strong>
 
             <span>
@@ -1462,7 +1486,7 @@ function TaskManager({ user }) {
             </span>
 
             <div className="top-avatar">
-              R
+              u
             </div>
 
           </div>
@@ -1559,6 +1583,23 @@ function TaskManager({ user }) {
                   rows="3"
                 />
 
+              </div>
+                <div className="form-group">
+                <label>Task Image</label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    setSelectedImage(e.target.files[0] || null);
+                  }}
+                />
+
+                {selectedImage && (
+                  <p className="selected-image-name">
+                    Selected: {selectedImage.name}
+                  </p>
+                )}
               </div>
 
 
